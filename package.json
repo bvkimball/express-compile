@@ -1,0 +1,45 @@
+{
+  "name": "express-compile",
+  "version": "0.0.1",
+  "description": "Supporting package to compile JS and CSS in Express applications",
+  "main": "lib/main.js",
+  "scripts": {
+    "compile": "babel --stage 0 -d lib/ src/ && babel --stage 0 --ignore 'test/fixtures/*' -d test-dist/ test/",
+    "prepublish": "npm run compile",
+    "test": "npm run compile && mocha test-dist/*"
+  },
+  "bin": {
+    "express-compile": "lib/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bvkimball/express-compile"
+  },
+  "keywords": [
+    "express"
+  ],
+  "author": "Brian Kimball <bvkimball@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bvkimball/express-compile/issues"
+  },
+  "homepage": "https://github.com/bvkimball/express-compile",
+  "dependencies": {
+    "btoa": "^1.1.2",
+    "electron-compile-cache": "^0.6.2",
+    "electron-compilers": "^0.7.2",
+    "lodash": "^3.8.0",
+    "minimatch": "^2.0.10",
+    "mkdirp": "^0.5.0",
+    "yargs": "^3.8.0"
+  },
+  "devDependencies": {
+    "babel": "^5.6.14",
+    "chai": "^3.2.0",
+    "chai-as-promised": "^5.0.0",
+    "chai-spies": "^0.7.0",
+    "cheerio": "^0.19.0",
+    "mocha": "^2.2.4",
+    "rimraf": "^2.4.1"
+  }
+}
