@@ -258,7 +258,7 @@ let translations = {
 }
     
 export default function middleware(options={}){
-    let {root, paths, cacheDir} = options;
+    let {root, paths, ignore, cacheDir} = options;
     if( cacheDir ){
         initForProduction(cacheDir, null, options);
     } else {
@@ -273,8 +273,12 @@ export default function middleware(options={}){
                 check = paths.some( (glob) => {
                     var result = minimatch(filepath, glob);
                     return result;
+                }),
+                ignored = ignore.some( (glob) => {
+                    var result = minimatch(filepath, glob);
+                    return result;
                 });
-            if( ext && ext.length && translations && translations[ext] && check){
+            if( ext && ext.length && translations && translations[ext] && check && !ignored){
                 console.log('Compiling', filepath);
                 response.setHeader( translations[ext][0], translations[ext][1]);
                 response.send( compile(filepath) );        
