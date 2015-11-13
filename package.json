@@ -1,6 +1,6 @@
 {
   "name": "express-compile",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Supporting package to compile JS and CSS in Express applications",
   "main": "lib/main.js",
   "scripts": {
