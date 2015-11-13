@@ -45,6 +45,10 @@ or just require them in:
 require('./mylib')   // mylib.ts
 ```
 
+### My LESS/SCSS imports aren't getting compiled
+
+Add the `disableStyleCache` flag to the options passed into the compiler
+
 ### Babel keeps running on my ES5 source
 
 Add `'use nobabel';` to the top of your file to opt-out of Babel compilation.

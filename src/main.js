@@ -23,15 +23,15 @@ export function createAllCompilers(compilerOpts=null) {
   let HtmlCompiler = null;
   let ret = _.map(allCompilerClasses, (Klass) => {
     let exts = Klass.getExtensions();
-    
+
     // NB: Inline HTML is a Special Snowflake
     if (_.find(exts, (x) => x === 'html')) {
       HtmlCompiler = Klass;
       return null;
     }
-    
+
     if (!compilerOpts) return new Klass();
-    
+
     let optsForUs = _.reduce(
       exts,
       (acc,x) => _.extend(acc, compilerOpts[x] || {}),
@@ -39,18 +39,18 @@ export function createAllCompilers(compilerOpts=null) {
 
     return new Klass(optsForUs);
   });
-  
+
   // Replace the slot we left in the compiler list with the inline HTML compiler
   return _.map(ret, (x) => {
     if (x != null) return x;
-    
+
     return new HtmlCompiler((sourceCode, filePath) => {
       let compiler = _.find(ret, (x) => x && x.shouldCompileFile(filePath, sourceCode));
       if (!compiler) {
         throw new Error("Couldn't find a compiler for " + filePath);
       }
-      
-      return compiler.loadFile(null, filePath, true, sourceCode);      
+
+      return compiler.loadFile(null, filePath, true, sourceCode);
     });
   });
 }
@@ -115,7 +115,7 @@ export function init(cacheDir=null, skipRegister=false) {
   });
 }
 
-// Public: Initializes the electron-compile library using only cached / 
+// Public: Initializes the electron-compile library using only cached /
 // precompiled files. Since this method won't use any of the compilers in
 // electron-compilers, you can remove this package from node_modules in
 // production builds and save a _lot_ of on-disk space.
@@ -128,7 +128,7 @@ export function init(cacheDir=null, skipRegister=false) {
 //
 // cacheDir: The path to a directory of precompiled assets
 //
-// compilerInformation (optional): The object returned by 
+// compilerInformation (optional): The object returned by
 // {collectCompilerInformation}, only necessary if you generated the cache
 // via {compile}/{compileAll} manually.
 //
@@ -144,7 +144,7 @@ export function initForProduction(cacheDir, compilerInformation=null, options={}
       throw new Error("Couldn't determine compiler information, either pass it as a parameter or save it in $cacheDir/settings.json: " + e.message);
     }
   }
-  
+
   let compilers = createProductionCompilersForInfo(compilerInformation);
   let opts = _.extend({}, options, { cacheDir, compilers, production: true, compilerInformation });
   initWithOptions(opts);
@@ -178,7 +178,7 @@ export function initForProduction(cacheDir, compilerInformation=null, options={}
 //
 // Returns nothing.
 export function initWithOptions(options={}) {
-  let {cacheDir, skipRegister, compilers} = options;
+  let {cacheDir, skipRegister, compilers, disableStyleCache} = options;
   if (lastCacheDir === cacheDir && availableCompilers) return;
 
   if (!cacheDir) {
@@ -194,12 +194,13 @@ export function initWithOptions(options={}) {
 
   _.each(availableCompilers, (compiler) => {
     if (!skipRegister) compiler.register();
+    if (disableStyleCache) compiler.disableStyleCache = true;
     compiler.setCacheDirectory(cacheDir);
   });
 
-  
+
   //TODO: Removed Protocol Hook, this should be called by the middleware
-    
+
 }
 
 // Public: Returns information about the current compilers' configured options.
@@ -235,19 +236,19 @@ export function collectCompilerInformation(compilers=null) {
 
 // Public: Returns a set of compilers that will mimic the compilers whose info
 // was gathered via {collectCompilerInformation}, but will only return cached
-// versions (i.e. if a file actually needs to be compiled, the compiler will 
-// throw an exception). 
+// versions (i.e. if a file actually needs to be compiled, the compiler will
+// throw an exception).
 //
 // compilerInfo: the {Object} returned from {collectCompilerInformation}.
 //
 // Returns an {Array} of objects conforming to {CompileCache}.
 export function createProductionCompilersForInfo(compilerInfo) {
   return _.map(
-    Object.keys(compilerInfo), 
+    Object.keys(compilerInfo),
     (x) => new ReadOnlyCompiler(compilerInfo[x].options, compilerInfo[x].mimeType));
 }
 
-    
+
 let translations = {
     less : ['Content-Type', 'text/css; charset=utf-8'],
     sass : ['Content-Type', 'text/css; charset=utf-8'],
@@ -256,15 +257,15 @@ let translations = {
     ts : ['Content-Type', 'application/javascript; charset=utf-8'],
     coffee : ['Content-Type', 'application/javascript; charset=utf-8']
 }
-    
+
 export default function middleware(options={}){
     let {root, paths, ignore, cacheDir} = options;
     if( cacheDir ){
         initForProduction(cacheDir, null, options);
     } else {
-        initWithOptions(options);                      
+        initWithOptions(options);
     }
-    
+
     return function(request, response, next) {
         if ('GET' != request.method.toUpperCase() && 'HEAD' != request.method.toUpperCase()) { return next(); }
         try {
@@ -281,13 +282,13 @@ export default function middleware(options={}){
             if( ext && ext.length && translations && translations[ext] && check && !ignored){
                 console.log('Compiling', filepath);
                 response.setHeader( translations[ext][0], translations[ext][1]);
-                response.send( compile(filepath) );        
+                response.send( compile(filepath) );
             } else {
                 return next();
             }
         } catch(err){
             console.log(err);
-            return next();  
+            return next();
         }
     }
 }
