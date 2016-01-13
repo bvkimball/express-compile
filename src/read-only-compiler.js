@@ -1,30 +1,36 @@
-import CompileCache from 'electron-compile-cache';
+import _ from 'lodash';
 
-export default class ReadOnlyCompiler extends CompileCache {
-  constructor(compilerInformation, mimeType) {
-    super();
-    
-    this.compilerInformation = compilerInformation;
-    this.mimeType = mimeType;
+
+/**
+ * ReadOnlyCompiler is a compiler which allows the host to inject all of the compiler
+ * metadata information so that {@link CompileCache} et al are able to recreate the
+ * hash without having two separate code paths.
+ */ 
+export default class ReadOnlyCompiler {
+  /**  
+   * Creates a ReadOnlyCompiler instance
+   *    
+   * @private
+   */   
+  constructor(name, compilerVersion, compilerOptions, inputMimeTypes) {
+    _.assign(this, { name, compilerVersion, compilerOptions, inputMimeTypes });
+  }
+  
+  async shouldCompileFile() { return true; }
+  async determineDependentFiles() { return []; }
+
+  async compile() {
+    throw new Error("Read-only compilers can't compile");
   }
 
-  getCompilerInformation() {
-    return this.compilerInformation;
+  shouldCompileFileSync() { return true; }
+  determineDependentFilesSync() { return []; }
+
+  compileSync() {
+    throw new Error("Read-only compilers can't compile");
   }
 
-  compile(sourceCode, filePath, cachePath) {
-    throw new Error(`Asked to compile ${filePath} in production!`);
-  }
-
-  getMimeType() {
-    return this.mimeType;
-  }
-
-  initializeCompiler() {
-    return this.compilerInformation.version;
-  }
-
-  static getExtensions() {
-    return [];
+  getCompilerVersion() {
+    return this.compilerVersion;
   }
 }

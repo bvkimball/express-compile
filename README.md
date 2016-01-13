@@ -24,18 +24,67 @@ app.use(compiler({
     root: 'public',
     paths: ['public/scripts/**/*','public/styles/**/*']
 }));
-app.use(express.static('/public')); 
+app.use(express.static('/public'));
 
 ```
 
-This will check every file in your public directory if it has a compiler associated with it, the compiled version will be returned, otherwise the original source with be returned.
+## electron-compile
+
+![](https://img.shields.io/npm/dm/electron-compile.svg) <a href="http://electronjs.github.io/electron-compile/docs">![](http://electronjs.github.io/electron-compile/docs/badge.svg)</a>
+
+electron-compile compiles JS and CSS on the fly with a single call in your app's 'ready' function.
+
+For JavaScript:
+
+* JavaScript ES6/ES7 (via Babel)
+* TypeScript
+* CoffeeScript
+
+For CSS:
+
+* LESS
+
+For HTML:
+
+* Jade
+
+### How does it work? (Easiest Way)
+
+Change your reference to `electron-prebuilt` to `electron-prebuilt-compile`. Tada! You did it.
+
+### Wait, seriously?
+
+Yeah. `electron-prebuilt-compile` is like an `electron-prebuilt` that Just Works with all of these languages above.
+
+### How does it work? (Slightly Harder Way)
+
+First, add `electron-compile` and `electron-compilers` as a `devDependency`.
+
+```sh
+npm install --save electron-compile
+npm install --save-dev electron-compilers
+```
+
+Create a new file that will be the entry point of your app (perhaps changing 'main' in package.json) - you need to pass in the root directory of your application, which will vary based on your setup. The root directory is the directory that your `package.json` is in.
+
+```js
+// Assuming this file is ./src/es6-init.js
+var appRoot = path.join(__dirname, '..');
+
+// ...and that your main app is called ./src/main.js. This is written as if
+// you were going to `require` the file from here.
+require('electron-compile').init(appRoot, './main');
+```
+
+
+### I did it, now what?
 
 From then on, you can now simply include files directly in your HTML, no need for cross-compilation:
 
 ```html
 <head>
   <script src="main.coffee"></script>
-  <link rel="stylesheet" type="text/css" href="main.less" />
+  <link rel="stylesheet" href="main.less" />
 </head>
 ```
 
@@ -45,91 +94,86 @@ or just require them in:
 require('./mylib')   // mylib.ts
 ```
 
-### My LESS/SCSS imports aren't getting compiled
+### Something isn't working / I'm getting weird errors
 
-Add the `disableStyleCache` flag to the options passed into the compiler
+electron-compile uses the [debug module](https://github.com/visionmedia/debug), set the DEBUG environment variable to debug what electron-compile is doing:
 
-### Babel keeps running on my ES5 source
+```sh
+## Debug just electron-compile
+DEBUG=electron-compile:* npm start
 
-Add `'use nobabel';` to the top of your file to opt-out of Babel compilation.
-
-### My files are compiled into the CommonJS format?
-
-Yes. This is because the project is forked from electron which uses node-webkit. It is recommended that you use [require1k](https://github.com/Stuk/require1k) a CommonJS loader for browsers, this allows you to setup your project with little to no configuration, but you can always pass compiler options as described below.
+## Grab everything except for Babel which is very noisy
+DEBUG=*,-babel npm start
+```
 
 ### How do I set up (Babel / LESS / whatever) the way I want?
 
-In order to configure individual compilers, use the `initWithOptions` method:
+If you've got a `.babelrc` and that's all you want to customize, you can simply use it directly. electron-compile will respect it, even the environment-specific settings. If you want to customize other compilers, use a `.compilerc` file. Here's an example:
 
 ```js
-let babelOpts = {
-  stage: 2
-};
-
-app.use(compiler({
-    root: 'public',
-    paths: ['public/scripts/**/*','public/styles/**/*'],
-    compilerOpts: {
-        // Compiler options are a map of extension <=> options for compiler
-        js: babelOpts
-    }
-}));
-
+{
+  "application/javascript": {
+    "presets": ["stage-0", "es2015", "react"],
+    "sourceMaps": "inline"
+  },
+  "text/less": {
+    "dumpLineNumbers": "comments"
+  }
+}
 ```
+
+`.compilerc` also accepts environments with the same syntax as `.babelrc`:
+
+```js
+{
+  "env": {
+    "development": {
+      "application/javascript": {
+        "presets": ["stage-0", "es2015", "react"],
+        "sourceMaps": "inline"
+      },
+      "text/less": {
+        "dumpLineNumbers": "comments"
+      }
+    },
+    "production": {
+      "application/javascript": {
+        "presets": ["stage-0", "es2015", "react"]
+        "sourceMaps": "none"
+      }
+    }
+  }
+}
+```
+
+The opening Object is a list of MIME Types, and options passed to the compiler implementation. These parameters are documented here:
+
+* Babel - http://babeljs.io/docs/usage/options
+* CoffeeScript - http://coffeescript.org/documentation/docs/coffee-script.html#section-5
+* TypeScript - https://github.com/Microsoft/TypeScript/blob/v1.5.0-beta/bin/typescriptServices.d.ts#L1076
+* LESS - http://lesscss.org/usage/index.html#command-line-usage-options
+* Jade - http://jade-lang.com/api
 
 ## How can I precompile my code for release-time?
 
-express-compile comes with a command-line application to pre-create a cache for you.
+electron-compile comes with a command-line application to pre-create a cache for you.
 
 ```sh
-Usage: express-compile --target [target-path] paths...
+Usage: electron-compile --appDir [root-app-dir] paths...
 
 Options:
-  -t, --target   The target directory to write a cache directory to
+  -a, --appdir  The top-level application directory (i.e. where your
+                package.json is)
   -v, --verbose  Print verbose information
   -h, --help     Show help
 ```
 
-Once you create a cache folder, pass it in as a parameter to `initForProduction()`. Ship the cache folder with your application, and you won't need to compile the app on first-run:
+Run `electron-compile` on all of your application assets, even if they aren't strictly code (i.e. your static assets like PNGs). electron-compile will recursively walk the given directories.
 
-```js
-app.use(compiler({
-    root: 'public',
-    paths: ['public/scripts/**/*','public/styles/**/*'],
-    cacheDir: 'path/to/cache/dir'
-}));
-
+```sh
+electron-compile --appDir /path/to/my/app ./src ./static
 ```
 
-In order to save space in your application, you can also delete `node_modules/express-compile/node_modules/express-compilers` in production so that you're not shipping the compiler implementations themselves (~56MB uncompressed).
+### But I use Grunt / Gulp / I want to do Something Interesting
 
-Compilation also has its own API:
-
-```js
-// Public: Compiles a single file given its path.
-//
-// filePath: The path on disk to the file
-// compilers: (optional) - An {Array} of objects conforming to {CompileCache}
-//                         that will be tried in-order to compile code. You must
-//                         call init() first if this parameter is null.
-//
-// Returns a {String} with the compiled output, or will throw an {Error} 
-// representing the compiler errors encountered.
-export function compile(filePath, compilers=null)
-
-// Public: Recursively compiles an entire directory of files.
-//
-// rootDirectory: The path on disk to the directory of files to compile.
-// compilers: (optional) - An {Array} of objects conforming to {CompileCache}
-//                         that will be tried in-order to compile code.
-//
-// Returns nothing.
-export function compileAll(rootDirectory, compilers=null)
-
-// Public: Allows you to create new instances of all compilers that are 
-// supported by express-compile and use them directly. Currently supports
-// Babel, CoffeeScript, TypeScript, LESS, and Sass/SCSS.
-//
-// Returns an {Array} of {CompileCache} objects.
-export function createAllCompilers()
-```
+Compilation also has its own API, check out the [documentation](http://electronjs.github.io/electron-compile/docs/badge.svg) for more information.

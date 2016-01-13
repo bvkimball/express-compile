@@ -25,31 +25,6 @@
       </div>
     </iron-pages>
   </template>
-
-  <script>
-  global.Polymer({
-    is: 'loading-screen',
-    properties: {
-      screen: {
-        type: String,
-        reflectToAttribute: true
-      }
-    },
-    
-    _emitRetry: () => {
-      this.fire('retry');
-    },
-
-    _pageForScreen: (theScreen) => {
-      return pageMap[theScreen];
-    }
-  });
-  </script>
-
-  <script src="https://lol"></script>
   
-  <script type="text/coffeescript">
-  f = ->
-    foo();
-  </script>
+  <x-require src='./valid'></x-require>
 </dom-module>
