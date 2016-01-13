@@ -327,11 +327,11 @@ export function getDefaultConfiguration() {
  */ 
 export function createCompilers() {
   if (!allCompilerClasses) {
-    // First we want to see if electron-compilers itself has been installed with
+    // First we want to see if express-compilers itself has been installed with
     // devDependencies. If that's not the case, check to see if
-    // electron-compilers is installed as a peer dependency (probably as a
+    // express-compilers is installed as a peer dependency (probably as a
     // devDependency of the root project).
-    const locations = ['electron-compilers', '../../electron-compilers'];
+    const locations = ['express-compilers', '../../express-compilers'];
 
     for (let location of locations) {
       try {
