@@ -25,7 +25,8 @@ function buildWithBuiltIn(root, source) {
     console.error(`Couldn't set up compilers: ${e.message}`);
     throw e;
   }
-  new Promise((resolve, reject) => {
+
+  return new Promise((resolve, reject) => {
     try {
       let result = compilerHost.compileSync(source);
       resolve(result);
