@@ -5,14 +5,14 @@ import _ from 'lodash';
 import minimatch from 'minimatch';
 import { createCompilerHostFromProjectRootSync } from './config-parser';
 
-import { rollup } from 'rollup';
-import babel from 'rollup-plugin-babel';
-import npm from 'rollup-plugin-npm';
-import commonjs from 'rollup-plugin-commonjs';
-import typescript from 'rollup-plugin-typescript';
-import string from 'rollup-plugin-string';
+//import { rollup } from 'rollup';
+//import babel from 'rollup-plugin-babel';
+//import npm from 'rollup-plugin-npm';
+//import commonjs from 'rollup-plugin-commonjs';
+//import typescript from 'rollup-plugin-typescript';
+//import string from 'rollup-plugin-string';
 
-import Builder from 'systemjs-builder';
+//import Builder from 'systemjs-builder';
 
 function buildWithBuiltIn(root, source) {
   let compilerHost = null;
@@ -38,61 +38,69 @@ function buildWithBuiltIn(root, source) {
   });
 }
 
-function buildWithSystemJS(root, source) {
-  let builder = new Builder(root, ''); //Need Config File
-  builder.config({
-    map: {
-      'systemjs-babel-build': 'node_modules/plugin-babel/systemjs-babel-node.js'
-    }
-  });
-  new Promise((resolve, reject) => {
-    builder.bundle(source, {
-      minify: false
-    }).then((output) => {
-      resolve(output);
-    //output.source; // generated bundle source
-    //output.sourceMap; // generated bundle source map
-    //output.modules; // array of module names defined in the bundle
-    }).catch((err) => {
-      reject(err);
-    });
-  });
-}
+//function buildWithSystemJS(root, source) {
+//  let builder = new Builder(root, ''); //Need Config File
+//  builder.config({
+//    map: {
+//      'systemjs-babel-build': 'node_modules/plugin-babel/systemjs-babel-node.js'
+//    }
+//  });
+//  new Promise((resolve, reject) => {
+//    builder.bundle(source, {
+//      minify: false
+//    }).then((output) => {
+//      resolve(output);
+//    //output.source; // generated bundle source
+//    //output.sourceMap; // generated bundle source map
+//    //output.modules; // array of module names defined in the bundle
+//    }).catch((err) => {
+//      reject(err);
+//    });
+//  });
+//}
+//
+//function buildWithRollup(root, source) {
+//  return new Promise((resolve, reject) => {
+//    rollup({
+//      entry: source,
+//      plugins: [
+//        //npm({ jsnext: true, main: true }), // include node_modules
+//        //commonjs(), // convert commonjs to es6 module syntax
+//        string({
+//          extensions: ['.html']
+//        }),
+//        babel({
+//          exclude: 'node_modules/**'
+//        })
+//      ]
+//    }).then(function(bundle) {
+//      // Generate bundle + sourcemap
+//      let result = bundle.generate({
+//        format: 'iife' // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
+//      });
+//
+//      resolve(result);
+//
+//    }).catch((err) => {
+//      console.log(err);
+//      reject(err);
+//    });
+//  });
+//}
 
-function buildWithRollup(root, source) {
-  return new Promise((resolve, reject) => {
-    rollup({
-      entry: source,
-      plugins: [
-        //npm({ jsnext: true, main: true }), // include node_modules
-        //commonjs(), // convert commonjs to es6 module syntax
-        string({
-          extensions: ['.html']
-        }),
-        babel({
-          exclude: 'node_modules/**'
-        })
-      ]
-    }).then(function(bundle) {
-      // Generate bundle + sourcemap
-      let result = bundle.generate({
-        format: 'iife' // output format - 'amd', 'cjs', 'es6', 'iife', 'umd'
-      });
-
-      resolve(result);
-
-    }).catch((err) => {
-      console.log(err);
-      reject(err);
-    });
-  });
-}
-
+let translations = {
+  less: ['Content-Type', 'text/css; charset=utf-8'],
+  sass: ['Content-Type', 'text/css; charset=utf-8'],
+  scss: ['Content-Type', 'text/css; charset=utf-8'],
+  js: ['Content-Type', 'application/javascript; charset=utf-8'],
+  ts: ['Content-Type', 'application/javascript; charset=utf-8'],
+  coffee: ['Content-Type', 'application/javascript; charset=utf-8']
+};
 
 export function ExpressCompiler(options = {}) {
   let {root, paths, ignore, cwd} = options;
 
-  return function(request, response, next) {
+  return function (request, response, next) {
     if ('GET' != request.method.toUpperCase() && 'HEAD' != request.method.toUpperCase()) {
       return next();
     }
@@ -109,8 +117,9 @@ export function ExpressCompiler(options = {}) {
         });
 
       if (ext && ext.length && check && !ignored) {
+        console.log(`Compiling ${filepath}`);
         buildWithBuiltIn(root, filepath).then((result) => {
-          response.setHeader('Content-Type', 'application/javascript');
+          response.setHeader(translations[ext][0], translations[ext][1]);
           response.send(result.code);
         }).catch((err) => {
           return next();
